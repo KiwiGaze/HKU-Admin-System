@@ -1,5 +1,5 @@
 # Student Dissertation Management System Prototype
-
+Author: [Qi Yijiazhen](http://www.qiyijiazhen.com) 
 ## Project Overview
 
 This project is a prototype for a Student Dissertation Management System developed as part of a take-home assessment. The system allows Administrators (Admin) and Teachers to manage the progress of student dissertations, including student assignments, grading, and status tracking.
