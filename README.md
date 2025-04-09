@@ -29,86 +29,116 @@ HKU-Admin-System/
 │   ├── tsconfig.node.json
 │   └── vite.config.ts
 └── server/
-  ├── package-lock.json
-  ├── package.json
-  ├── src/
-  │   └── index.ts
-  └── tsconfig.json
+    ├── package-lock.json
+    ├── package.json
+    ├── src/
+    │   ├── index.ts                 # Main entry point, server setup and database initialization
+    │   ├── models/
+    │   │   └── index.ts             # Database model definitions (Student, Teacher)
+    │   └── routes/                  # API routes
+    │       ├── authRoutes.ts        # Authentication routes (/login)
+    │       ├── studentRoutes.ts     # Student-related routes (/api/students/*)
+    │       └── teacherRoutes.ts     # Teacher-related routes (/api/teachers)
+    └── tsconfig.json
 ```
 
 ## Features
 
 ### Administrator (Admin)
 
-*   **Manage Student Lists:** Add new students to the system. (Optional: Edit and delete student information).
-*   **Assign Students to Teachers:** Allocate students from the list to specific responsible teachers.
-*   **View All Student Status:** Display a comprehensive overview of all students, including their assigned teacher, current grade, and finalization status.
+* **Manage Student Lists:** Add new students to the system.
+* **Assign Students to Teachers:** Allocate students to specific teachers (not allowed for finalized records).
+* **View All Student Status:** Display a comprehensive overview of all students, including their assigned teacher, progress and final report grades, and finalization status.
 
 ### Teacher
 
-*   **View Assigned Students:** Access a list containing only the students assigned to them.
-*   **Input Student Grades:** Enter grades for the students under their supervision.
-*   **Submit Grades:** Confirm and submit the entered grades.
-*   **Finalize Records:** Mark a student's record as finalized after grading, making the status visible to the Admin.
+* **View Assigned Students:** Access a list containing only the students assigned to them.
+* **Input Student Grades:** Enter grades for both progress and final reports (not allowed for finalized records).
+* **Finalize Records:** Mark a student's record as finalized after grading (requires final grade to be entered), preventing further modifications after confirmation.
 
 ## Technology Stack
 
-*   **Frontend:** Vue.js (Mandatory)
-*   **UI Framework:** Tailwind CSS (Mandatory)
-*   **Development Server:** Vite (Mandatory)
-*   **State Management:** Pinia 
-*   **Backend:** Node.js with Express.js (Optional - Nice to Have)
-*   **Data Persistence:**  PostgreSQL (Optional - Nice to Have)
+* **Frontend:** Vue.js 3 with TypeScript
+* **UI Framework:** Tailwind CSS
+* **Development Server:** Vite
+* **State Management:** Pinia
+* **Backend:** Node.js with Express.js and TypeScript
+* **Data Persistence:** SQLite with Sequelize ORM
+* **API Testing:** curl or Postman
 
 ## Getting Started
 
 ### Prerequisites
 
-*   Node.js and npm (or yarn) installed.
-*   Git (for cloning the repository).
+* Node.js and npm (or yarn) installed.
+* Git (for cloning the repository).
 
 ### Installation
 
-1.  Clone the repository:
+1. Clone the repository:
   ```bash
   git clone https://github.com/KiwiGaze/HKU-Admin-System.git
   cd HKU-Admin-System
   ```
-2.  Install frontend dependencies:
+2. Install frontend dependencies:
   ```bash
   cd client
   npm install
   ```
-3.  Install backend dependencies:
+3. Install backend dependencies:
   ```bash
-  cd server
+  cd ../server
   npm install
   ```
 
 ### Running the Application
 
-1.  **Run the Frontend (Vite Development Server):**
+1. **Run the Backend Server:**
   ```bash
-  # In the frontend directory
+  # In the server directory
+  npm run dev
+  ```
+  The backend API will run on `http://localhost:3000`. On first run, it will:
+  - Create a SQLite database file (`database.sqlite`)
+  - Initialize default teacher data automatically
+
+2. **Run the Frontend (Vite Development Server):**
+  ```bash
+  # In the client directory
   npm run dev
   ```
   The application should be accessible at `http://localhost:5173`.
 
-2.  **Run the Backend Server:**
-  ```bash
-  # In the backend directory
-  npm run dev
-  ```
-  The backend API will likely run on a different port (e.g., `http://localhost:3000`).
-
 ## Usage
 
-1.  Open the application in your web browser (link provided by the development server).
-2.  The application may provide a simple mechanism (e.g., buttons, dropdown) to switch between the `Admin` and `Teacher` roles to demonstrate different functionalities.
-3.  Follow the on-screen interface to perform actions relevant to the selected role:
-  *   **Admin:** Add students, assign teachers, view the overall student status dashboard.
-  *   **Teacher:** View assigned students, input grades, submit, and finalize records.
+### Authentication (Login Credentials)
 
+* **Admin Login:**
+  - Username: `admin`
+  - Password: `admin123`
+
+* **Teacher Logins:**
+  - Username: `teacher1`, Password: `pass123` (Professor Smith)
+  - Username: `teacher2`, Password: `pass456` (Dr. Johnson)
+
+### API Endpoints
+
+The backend provides the following RESTful API endpoints:
+
+* **Authentication:**
+  - `POST /login` - Validate user credentials, return role and user ID
+
+* **Admin Endpoints:**
+  - `GET /api/teachers` - Get all teachers (Admin only)
+  - `GET /api/students` - Get all students (Admin sees all, Teacher sees assigned only)
+  - `POST /api/students` - Create a new student (Admin only)
+  - `PUT /api/students/:id/assign` - Assign a teacher to a student (Admin only)
+
+* **Teacher Endpoints:**
+  - `PUT /api/students/:id/grade` - Grade a student's progress or final report
+  - `PUT /api/students/:id/finalize` - Finalize a student's record (requires final grade)
+
+For API testing, you can use curl commands as described in the development documentation.
 
 ## Video Demonstration
 
@@ -116,10 +146,10 @@ A video demonstration showcasing the application's features and workflow can be 
 [Link to Video Demonstration - To be added]
 
 ## Future Improvements
-*   Implement user authentication and authorization for secure access.
-*   Enhance the UI/UX for better user experience.
-*   Add more detailed error handling and validation.
-*   Implement a more robust backend with data persistence using PostgreSQL.
-*   Add unit tests and integration tests for both frontend and backend.
-*   Improve the state management and data flow between components.
-*   Implement a more comprehensive logging system for tracking user actions and errors.
+
+* Implement a proper frontend interface with Vue.js components
+* Add more robust error handling and user feedback
+* Add more comprehensive logging
+* Implement proper authentication with JWT instead of hardcoded credentials
+* Add unit tests for both frontend and backend
+* Improve API documentation with Swagger or similar tools
