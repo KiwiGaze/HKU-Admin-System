@@ -60,9 +60,11 @@ HKU-Admin-System/
 
 * **Frontend:** Vue.js 3 with TypeScript
 * **UI Framework:** Tailwind CSS
+* **UI Components Library:** [Shadcn/Vue](https://www.shadcn-vue.com/)
 * **Development Server:** Vite
 * **State Management:** Pinia
-* **Backend:** Node.js with Express.js and TypeScript
+* **Backend:** Express.js (Node.js)
+* **Database:** SQLite
 * **Data Persistence:** SQLite with Sequelize ORM
 * **API Testing:** curl or Postman
 

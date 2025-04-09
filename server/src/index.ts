@@ -3,9 +3,10 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import { sequelize, Teacher } from './models';
 import { v4 as uuidv4 } from 'uuid';
-import studentRoutes from './routes/studentRoutes';
+import studentRoutes from '@/routes/studentRoutes';
 import teacherRoutes from './routes/teacherRoutes';
 import authRoutes from './routes/authRoutes';
+import 'module-alias/register';
 
 const app: Express = express();
 const port: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
