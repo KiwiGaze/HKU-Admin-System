@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Design files
+design/
+
+# Local env files
+.env
+
+# Database
+*.sqlite
