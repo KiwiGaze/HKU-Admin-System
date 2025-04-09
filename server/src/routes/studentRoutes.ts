@@ -1,6 +1,6 @@
 //server/src/routes/studentRoutes.ts
 import { Router, Request, Response, NextFunction } from 'express';
-import { Student, Teacher } from '../models/index';
+import { Student, StudentInstance, Teacher, TeacherInstance } from '../models/index';
 import { Op } from 'sequelize';
 
 const router = Router();
@@ -20,7 +20,7 @@ const getCurrentUserId = (req: Request): string | null => {
 // --- End Hardcoded User Roles ---
 
 
-// GET /api/students - Explicitly type return as Promise<void>
+// GET /api/students - Get Student List (Admin/Teacher)
 router.get('/students', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const role = getCurrentUserRole(req);
     const userId = getCurrentUserId(req);
@@ -35,20 +35,18 @@ router.get('/students', async (req: Request, res: Response, next: NextFunction):
                 include: [Teacher]
             });
         } else {
-            // Send response and return to avoid further execution
             res.status(403).json({ message: 'Forbidden: Access denied or missing user ID.' });
-            return; // Explicitly return void
+            return;
         }
-        // Send response and implicitly return void
         res.json(students);
         return;
     } catch (error) {
         console.error("Error fetching students:", error);
-        next(error); // Pass error to handler
+        next(error);
     }
 });
 
-// POST /api/students - Explicitly type return as Promise<void>
+// POST /api/students - Add New Student (Admin)
 router.post('/students', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const role = getCurrentUserRole(req);
     if (role !== 'admin') {
@@ -64,18 +62,111 @@ router.post('/students', async (req: Request, res: Response, next: NextFunction)
 
     try {
         const newStudent = await Student.create({ name: name });
-        // Send response and implicitly return void
         res.status(201).json(newStudent);
     } catch (error) {
         console.error("Error adding student:", error);
-        next(error); // Pass error to handler
+        next(error);
     }
 });
 
+// PUT /api/students/:id/assign - Assign Teacher (Admin)
+router.put('/students/:id/assign', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const role = getCurrentUserRole(req);
+    if (role !== 'admin') {
+        res.status(403).json({ message: 'Forbidden: Only admins can assign teachers.' });
+        return;
+    }
 
-// --- Placeholder for other student routes ---
-// ...
-// --- End Placeholder ---
+    const studentId = req.params.id;
+    const { teacherId } = req.body;
 
+    if (!teacherId || typeof teacherId !== 'string') {
+        res.status(400).json({ message: 'Bad Request: Teacher ID is required.' });
+        return;
+    }
+
+    try {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            res.status(404).json({ message: 'Student not found.' });
+            return;
+        }
+
+        if (student.finalized) {
+            res.status(409).json({ message: 'Conflict: Cannot modify a finalized record.' });
+            return;
+        }
+
+        const teacher = await Teacher.findByPk(teacherId);
+        if (!teacher) {
+            res.status(404).json({ message: 'Teacher not found.' });
+            return;
+        }
+
+        student.assignedTeacherId = teacherId;
+        await student.save();
+
+        const updatedStudent = await Student.findByPk(studentId, { include: [Teacher] });
+        res.json(updatedStudent);
+    } catch (error) {
+        console.error("Error assigning teacher:", error);
+        next(error);
+    }
+});
+
+// PUT /api/students/:id/grade - Grade Student (Teacher)
+router.put('/students/:id/grade', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const role = getCurrentUserRole(req);
+    const userId = getCurrentUserId(req);
+    
+    if (role !== 'teacher' || !userId) {
+        res.status(403).json({ message: 'Forbidden: Only teachers can grade students.' });
+        return;
+    }
+
+    const studentId = req.params.id;
+    const { reportType, grade } = req.body;
+
+    if (!reportType || !['progress', 'final'].includes(reportType)) {
+        res.status(400).json({ message: 'Bad Request: Valid reportType (progress or final) is required.' });
+        return;
+    }
+
+    if (typeof grade !== 'number' || grade < 0 || grade > 100) {
+        res.status(400).json({ message: 'Bad Request: Grade must be a number between 0 and 100.' });
+        return;
+    }
+
+    try {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            res.status(404).json({ message: 'Student not found.' });
+            return;
+        }
+
+        if (student.assignedTeacherId !== userId) {
+            res.status(403).json({ message: 'Forbidden: You are not assigned to this student.' });
+            return;
+        }
+
+        if (student.finalized) {
+            res.status(409).json({ message: 'Conflict: Cannot modify a finalized record.' });
+            return;
+        }
+
+        if (reportType === 'progress') {
+            student.progressReportGrade = grade;
+        } else {
+            student.finalReportGrade = grade;
+        }
+
+        await student.save();
+
+        res.json(student);
+    } catch (error) {
+        console.error("Error grading student:", error);
+        next(error);
+    }
+});
 
 export default router;

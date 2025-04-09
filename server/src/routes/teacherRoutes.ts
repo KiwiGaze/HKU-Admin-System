@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { Teacher } from '../models/index'; // Import the Teacher model
+import { Teacher, TeacherInstance } from '../models/index'; // Import the Teacher model
 
 const router = Router();
 

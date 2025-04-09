@@ -1,12 +1,34 @@
 // filepath: server/src/models/index.ts
-import { Sequelize, DataTypes } from 'sequelize';
+import { Sequelize, DataTypes, Model } from 'sequelize'; // Add Model import
 
-// Initialize Sequelize (same configuration as in index.ts)
+// Initialize Sequelize
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: './database.sqlite',
   logging: console.log, // Or false in production
 });
+
+// Define Student model instance interface
+export interface StudentInstance extends Model {
+  id: string;
+  name: string;
+  assignedTeacherId: string | null;
+  progressReportGrade: number | null;
+  finalReportGrade: number | null;
+  finalized: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  save(): Promise<this>;
+}
+
+// Define Teacher model instance interface
+export interface TeacherInstance extends Model {
+  id: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  save(): Promise<this>;
+}
 
 // Define Student model
 const Student = sequelize.define('Student', {
@@ -42,7 +64,11 @@ const Student = sequelize.define('Student', {
     },
 }, {
     timestamps: true,
-});
+}) as unknown as { // Add type assertion
+  findByPk(id: string, options?: any): Promise<StudentInstance | null>; // Update this line to allow options
+  findAll(options?: any): Promise<StudentInstance[]>;
+  create(data: Partial<StudentInstance>): Promise<StudentInstance>;
+};
 
 // Define Teacher model
 const Teacher = sequelize.define('Teacher', {
@@ -57,15 +83,12 @@ const Teacher = sequelize.define('Teacher', {
     },
 }, {
     timestamps: true,
-});
+}) as unknown as { // Add type assertion
+  findByPk(id: string, options?: any): Promise<TeacherInstance | null>; // Update this line
+  findAll(options?: any): Promise<TeacherInstance[]>;
+  findOne(options?: any): Promise<TeacherInstance | null>;
+  create(data: Partial<TeacherInstance>): Promise<TeacherInstance>;
+};
 
-// --- Define Associations (Optional but Recommended) ---
-// Example: A Teacher can have many Students
-Teacher.hasMany(Student, { foreignKey: 'assignedTeacherId' });
-// Example: A Student belongs to one Teacher (or null)
-Student.belongsTo(Teacher, { foreignKey: 'assignedTeacherId' });
-// --- End Associations ---
-
-
-// Export sequelize instance and models
+// Export models and interfaces
 export { sequelize, Student, Teacher };
