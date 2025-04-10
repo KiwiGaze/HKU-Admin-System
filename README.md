@@ -19,9 +19,27 @@ HKU-Admin-System/
 │   │   ├── assets/
 │   │   │   └── vue.svg
 │   │   ├── components/
-│   │   │   └── HelloWorld.vue
+│   │   │   ├── common/        # Common components (e.g., ConfirmationModal)
+│   │   │   ├── students/      # Student-related components
+│   │   │   ├── ui/            # UI components (e.g., Button, Card)
+│   │   │       ├── alert/         # Alert components
+│   │   │       ├── button/        # Button components
 │   │   ├── main.ts
+│   │   ├── router/            # Vue Router configuration
+│   │   │   ├── index.ts       # Router setup
+│   │   ├── services/          # API service layer
+│   │   │   └── api.ts         # API calls to the backend
+│   │   ├── stores/            # Pinia state management
+│   │   │   ├── authStore.ts    # Authentication store
+│   │   │   ├── studentStore.ts # Student-related store
+│   │   │   └── teacherStore.ts  # Teacher-related store
 │   │   ├── style.css
+│   │   ├── types/             # TypeScript type definitions
+│   │   │   ├── models.ts      # Type definitions for models (Student, Teacher)
+│   │   ├── views/             # Page-level components
+│   │   │   ├── AdminDashboard.vue
+│   │   │   ├── LoginPage.vue
+│   │   │   └── TeacherDashboard.vue
 │   │   └── vite-env.d.ts
 │   ├── tailwind.config.ts
 │   ├── tsconfig.app.json
