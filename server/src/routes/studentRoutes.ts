@@ -114,6 +114,39 @@ router.put('/students/:id/assign', async (req: Request, res: Response, next: Nex
     }
 });
 
+// Put /api/students/:id/unassign - Unassign Teacher (Admin)
+router.put('/students/:id/unassign', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const role = getCurrentUserRole(req);
+    if (role !== 'admin') {
+        res.status(403).json({ message: 'Forbidden: Only admins can unassign teachers.' });
+        return;
+    }
+
+    const studentId = req.params.id;
+
+    try {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            res.status(404).json({ message: 'Student not found.' });
+            return;
+        }
+
+        if (student.finalized) {
+            res.status(409).json({ message: 'Conflict: Cannot modify a finalized record.' });
+            return;
+        }
+
+        student.assignedTeacherId = null;
+        await student.save();
+
+        const updatedStudent = await Student.findByPk(studentId, { include: [Teacher] });
+        res.json(updatedStudent);
+    } catch (error) {
+        console.error("Error unassigning teacher:", error);
+        next(error);
+    }
+});
+
 // PUT /api/students/:id/grade - Grade Student (Teacher)
 router.put('/students/:id/grade', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const role = getCurrentUserRole(req);
@@ -209,6 +242,63 @@ router.put('/students/:id/finalize', async (req: Request, res: Response, next: N
         res.json(student);
     } catch (error) {
         console.error("Error finalizing student record:", error);
+        next(error);
+    }
+});
+
+// PUT /api/students/:id/unfinalize - Unfinalize Student Record (Admin)
+router.put('/students/:id/unfinalize', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const role = getCurrentUserRole(req);
+    if (role !== 'admin') {
+        res.status(403).json({ message: 'Forbidden: Only admins can unfinalize student records.' });
+        return;
+    }
+    const studentId = req.params.id;
+    try {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            res.status(404).json({ message: 'Student not found.' });
+            return;
+        }
+        if (!student.finalized) {
+            res.status(409).json({ message: 'Conflict: Record is not finalized.' });
+            return;
+        }
+        student.finalized = false;
+        await student.save();
+        res.json(student);
+    } catch (error) {
+        console.error("Error unfinalizing student record:", error);
+        next(error);
+    }
+});
+
+// DELETE /api/students/:id - Delete Student (Admin)
+router.delete('/students/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const role = getCurrentUserRole(req);
+    if (role !== 'admin') {
+        res.status(403).json({ message: 'Forbidden: Only admins can delete students.' });
+        return;
+    }
+
+    const studentId = req.params.id;
+
+    try {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            res.status(404).json({ message: 'Student not found.' });
+            return;
+        }
+
+        if (student.finalized) {
+            res.status(409).json({ message: 'Conflict: Cannot delete a finalized record.' });
+            return;
+        }
+
+        await student.destroy();
+        res.status(204).send();
+    } catch (error) {
+        console.error("Error deleting student:", error);
         next(error);
     }
 });

@@ -62,22 +62,17 @@ const handleLogin = handleSubmit(async (values) => {
 <template>
   <div class="flex min-h-screen bg-background">
     <!-- Left Panel -->
-    <div class="hidden lg:flex lg:w-1/2 bg-muted flex-col justify-center items-center p-12">
-      <div class="max-w-md">
-        <div class="flex items-center gap-3 mb-8">
-          <School class="h-12 w-12 text-primary" />
-          <h1 class="text-4xl font-bold text-primary">HKU</h1>
-        </div>
-        <h2 class="text-3xl font-bold mb-6 text-foreground">Thesis Management System</h2>
-        <p class="text-lg text-muted-foreground mb-6">
-          An integrated platform for efficient management of academic papers, streamlined teaching processes, and improved teaching quality.
-        </p>
-        <div class="bg-accent p-6 rounded-xl border border-border mt-8">
-          <blockquote class="text-foreground italic">
-            "Education is not the filling of a pail, but the lighting of a fire."
-          </blockquote>
-          <p class="text-muted-foreground mt-2 text-right">— Socrates</p>
-        </div>
+    <div class="hidden lg:flex lg:w-1/2 bg-muted flex-col justify-center items-center p-12 relative bg-cover bg-center" style="background-image: url('/login-bg.jpg');">
+      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="max-w-md relative z-10 backdrop-blur-sm bg-black/20 p-8 rounded-xl">
+      <div class="flex items-center gap-3 mb-8">
+        <School class="h-14 w-14 text-white drop-shadow-lg" />
+        <h1 class="text-5xl font-extrabold text-white drop-shadow-lg tracking-tight">HKU</h1>
+      </div>
+      <h2 class="text-3xl font-bold mb-6 text-white drop-shadow-md tracking-wide">Thesis Management System</h2>
+      <p class="text-xl font-medium text-white mb-6 leading-relaxed drop-shadow-md">
+        An integrated platform for efficient management of academic papers, streamlined teaching processes, and improved teaching quality.
+      </p>
       </div>
     </div>
 

@@ -55,6 +55,12 @@ export const assignTeacherApi = async (studentId: string, teacherId: string) => 
   return response.data;
 };
 
+// Unassign teacher from student API (Admin only)
+export const unassignTeacherApi = async (studentId: string) => {
+  const response = await api.put(`/api/students/${studentId}/unassign`);
+  return response.data;
+};
+
 // Grade student API (Teacher only)
 export const gradeStudentApi = async (studentId: string, reportType: 'progress' | 'final', grade: number) => {
   const response = await api.put(`/api/students/${studentId}/grade`, { reportType, grade });
@@ -66,3 +72,15 @@ export const finalizeRecordApi = async (studentId: string) => {
   const response = await api.put(`/api/students/${studentId}/finalize`);
   return response.data;
 };
+
+// Unfinalize student record API (Admin only)
+export const unfinalizeRecordApi = async (studentId: string) => {
+  const response = await api.put(`/api/students/${studentId}/unfinalize`);
+  return response.data;
+}
+
+// Delete student API (Admin only)
+export const deleteStudentApi = async (studentId: string) => {
+  const response = await api.delete(`/api/students/${studentId}`);
+  return response.data;
+}

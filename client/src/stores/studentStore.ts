@@ -4,8 +4,11 @@ import {
   fetchStudentsApi, 
   addStudentApi, 
   assignTeacherApi, 
+  unassignTeacherApi,
   gradeStudentApi, 
-  finalizeRecordApi 
+  finalizeRecordApi,
+  unfinalizeRecordApi,
+  deleteStudentApi
 } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { Student } from '@/types/models';
@@ -80,6 +83,29 @@ export const useStudentStore = defineStore('student', {
         this.processingIds = this.processingIds.filter(id => id !== studentId);
       }
     },
+
+    async unassignTeacher(studentId: string) {
+      this.processingIds = [...this.processingIds, studentId];
+      this.error = null;
+
+      try {
+        const updatedStudent = await unassignTeacherApi(studentId);
+        
+        // Update the student object in the list
+        const index = this.students.findIndex(s => s.id === studentId);
+        if (index !== -1) {
+          this.students[index] = updatedStudent;
+        }
+        
+        return updatedStudent;
+      } catch (error: any) {
+        this.error = error.response?.data?.message || 'Failed to unassign teacher';
+        console.error('Error unassigning teacher:', error);
+        throw error;
+      } finally {
+        this.processingIds = this.processingIds.filter(id => id !== studentId);
+      }
+    }, 
     
     async gradeStudent(studentId: string, reportType: 'progress' | 'final', grade: number) {
       this.processingIds = [...this.processingIds, studentId];
@@ -121,6 +147,47 @@ export const useStudentStore = defineStore('student', {
       } catch (error: any) {
         this.error = error.response?.data?.message || 'Failed to finalize record';
         console.error('Error finalizing record:', error);
+        throw error;
+      } finally {
+        this.processingIds = this.processingIds.filter(id => id !== studentId);
+      }
+    },
+
+    async unfinalizeRecord(studentId: string) {
+      this.processingIds = [...this.processingIds, studentId];
+      this.error = null;
+      
+      try {
+        const updatedStudent = await unfinalizeRecordApi(studentId);
+        
+        const index = this.students.findIndex(s => s.id === studentId);
+        if (index !== -1) {
+          this.students[index] = updatedStudent;
+        }
+        
+        return updatedStudent;
+      } catch (error: any) {
+        this.error = error.response?.data?.message || 'Failed to unfinalize record';
+        console.error('Error unfinalizing record:', error);
+        throw error;
+      } finally {
+        this.processingIds = this.processingIds.filter(id => id !== studentId);
+      }
+    },
+    
+    async deleteStudent(studentId: string) {
+      this.processingIds = [...this.processingIds, studentId];
+      this.error = null;
+      
+      try {
+        await deleteStudentApi(studentId);
+        
+        this.students = this.students.filter(s => s.id !== studentId);
+        
+        return true;
+      } catch (error: any) {
+        this.error = error.response?.data?.message || 'Failed to delete student';
+        console.error('Error deleting student:', error);
         throw error;
       } finally {
         this.processingIds = this.processingIds.filter(id => id !== studentId);
