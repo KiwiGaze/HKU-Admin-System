@@ -109,7 +109,7 @@ HKU-Admin-System/
   ```
 3. Install backend dependencies:
   ```bash
-  cd ../server
+  cd server
   npm install
   ```
 
