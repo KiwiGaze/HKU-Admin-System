@@ -10,10 +10,11 @@ import authRoutes from './routes/authRoutes';
 
 const app: Express = express();
 const port: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const clientUrl: string = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // --- Middleware ---
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: clientUrl,
   exposedHeaders: ['Content-Length', 'X-Kuma-Revision'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Role', 'X-User-Id'],
 }));
