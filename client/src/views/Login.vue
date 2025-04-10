@@ -60,24 +60,28 @@ const handleLogin = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-background">
+  <div class="flex min-h-screen bg-gradient-to-br from-background to-muted">
     <!-- Left Panel -->
     <div class="hidden lg:flex lg:w-1/2 bg-muted flex-col justify-center items-center p-12 relative bg-cover bg-center" style="background-image: url('/login-bg.jpg');">
       <div class="absolute inset-0 bg-black/50"></div>
       <div class="max-w-md relative z-10 backdrop-blur-sm bg-black/20 p-8 rounded-xl">
-      <div class="flex items-center gap-3 mb-8">
-        <School class="h-14 w-14 text-white drop-shadow-lg" />
-        <h1 class="text-5xl font-extrabold text-white drop-shadow-lg tracking-tight">HKU</h1>
-      </div>
-      <h2 class="text-3xl font-bold mb-6 text-white drop-shadow-md tracking-wide">Thesis Management System</h2>
-      <p class="text-xl font-medium text-white mb-6 leading-relaxed drop-shadow-md">
-        An integrated platform for efficient management of academic papers, streamlined teaching processes, and improved teaching quality.
-      </p>
+        <div class="flex items-center gap-3 mb-8">
+          <School class="h-14 w-14 text-white drop-shadow-lg" />
+          <h1 class="text-5xl font-extrabold text-white drop-shadow-lg tracking-tight">HKU</h1>
+        </div>
+        <h2 class="text-3xl font-bold mb-6 text-white drop-shadow-md tracking-wide">Thesis Management System</h2>
+        <p class="text-xl font-medium text-white mb-6 leading-relaxed drop-shadow-md">
+          An integrated platform for efficient management of academic papers, streamlined teaching processes, and improved teaching quality.
+        </p>
+        <div class="mt-12 flex items-center gap-3 text-white/80">
+          <Lock class="h-5 w-5" />
+          <p class="text-sm">Secure login required for all users</p>
+        </div>
       </div>
     </div>
 
     <!-- Right Panel - Login Form -->
-    <div class="w-full lg:w-1/2 flex flex-col justify-center items-center px-6">
+    <div class="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 py-12 bg-gradient-to-b from-background to-background/95">
       <div class="w-full max-w-md">
         <div class="lg:hidden flex justify-center mb-10">
           <div class="flex items-center gap-2">
@@ -86,7 +90,7 @@ const handleLogin = handleSubmit(async (values) => {
           </div>
         </div>
 
-        <Card class="w-full shadow-md border border-border bg-background">
+        <Card class="w-full shadow-lg border border-border bg-background/95 backdrop-filter backdrop-blur-sm">
           <CardHeader class="pb-2">
             <CardTitle class="text-2xl font-bold text-foreground">Welcome Back</CardTitle>
             <CardDescription class="text-muted-foreground">
@@ -109,11 +113,11 @@ const handleLogin = handleSubmit(async (values) => {
                   </div>
                   <FormControl>
                     <div class="relative group">
-                      <User class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <User class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
                         type="text"
                         placeholder="Enter your username"
-                        class="pl-10 h-11 transition-all border-input hover:border-primary focus:border-primary"
+                        class="pl-10 h-11 transition-all border-input hover:border-primary focus:border-primary focus:ring-1 focus:ring-primary"
                         :disabled="isSubmitting"
                         autocomplete="username"
                         v-bind="componentField"
@@ -131,11 +135,11 @@ const handleLogin = handleSubmit(async (values) => {
                   </div>
                   <FormControl>
                     <div class="relative group">
-                      <Lock class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <Lock class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
                         type="password"
                         placeholder="Enter your password"
-                        class="pl-10 h-11 transition-all border-input hover:border-primary focus:border-primary"
+                        class="pl-10 h-11 transition-all border-input hover:border-primary focus:border-primary focus:ring-1 focus:ring-primary"
                         :disabled="isSubmitting"
                         autocomplete="current-password"
                         v-bind="componentField"
@@ -178,9 +182,16 @@ const handleLogin = handleSubmit(async (values) => {
           </CardFooter>
         </Card>
         
-        <p class="text-center text-xs text-muted-foreground mt-8">
-          © {{ new Date().getFullYear() }} Qi Yijiazhen. All rights reserved.
-        </p>
+        <div class="text-center mt-8 space-y-2">
+          <p class="text-xs text-muted-foreground">
+            © {{ new Date().getFullYear() }} Qi Yijiazhen. All rights reserved.
+          </p>
+          <div class="flex justify-center gap-4 text-xs text-muted-foreground">
+            <a href="#" class="hover:text-primary transition-colors">Privacy Policy</a>
+            <a href="#" class="hover:text-primary transition-colors">Terms of Service</a>
+            <a href="#" class="hover:text-primary transition-colors">Support</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -62,7 +62,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('userName');
 
       // Reset document title
-      document.title = 'HKU Admin System';
+      document.title = 'hesis Management System';
     }
   }
 });
