@@ -85,6 +85,7 @@ HKU-Admin-System/
 * **Database:** SQLite
 * **Data Persistence:** SQLite with Sequelize ORM
 * **API Testing:** curl or Postman
+* **Icon Library:** [Lucide-Vue-Next](https://lucide.dev/)
 
 ## Getting Started
 
