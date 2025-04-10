@@ -40,36 +40,38 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDebounce } from '@/composables/useDebounce';
 
-const studentStore = useStudentStore();
-const authStore = useAuthStore();
+// Initialize Pinia stores for state management
+const studentStore = useStudentStore(); // Manages student data
+const authStore = useAuthStore(); // Manages authentication state
 
-const isLoading = ref(false);
-const error = ref<string | null>(null);
+// General component state
+const isLoading = ref(false); // Tracks loading state for data fetching
+const error = ref<string | null>(null); // Stores any error messages during data fetching
 
-// Dialog state
-const gradeDialogOpen = ref(false);
-const selectedStudent = ref<string | null>(null);
-const selectedReportType = ref<'progress' | 'final'>('progress');
-const gradeInputValue = ref<number | null>(null);
-const isSubmitting = ref(false);
-const gradeSubmitError = ref<string | null>(null);
+// State for the "Grade Student" dialog
+const gradeDialogOpen = ref(false); // Controls visibility of the grade dialog
+const selectedStudent = ref<string | null>(null); // ID of the student being graded
+const selectedReportType = ref<'progress' | 'final'>('progress'); // Type of report being graded
+const gradeInputValue = ref<number | null>(null); // Input value for the grade
+const isSubmitting = ref(false); // Tracks if the grade submission is in progress
+const gradeSubmitError = ref<string | null>(null); // Stores errors related to grade submission
 
-// Search and filter state
-const searchQuery = ref('');
-const isSearching = ref(false);
-const statusFilter = ref('all');
-const sortBy = ref('name');
-const sortOrder = ref('asc');
+// State for student filtering and sorting
+const searchQuery = ref(''); // Input value for searching students
+const isSearching = ref(false); // Tracks if a search operation is in progress
+const statusFilter = ref('all'); // Filter students by status ('all', 'finalized', 'in-progress')
+const sortBy = ref('name'); // Field to sort students by ('name', 'progress', 'final', 'status')
+const sortOrder = ref('asc'); // Sort order ('asc' or 'desc')
 
-// Active tab state
-const activeTab = ref('assigned');
-const isPendingTabChange = ref(false);
+// State for managing tabs
+const activeTab = ref('assigned'); // Currently selected tab ('assigned' or 'reports')
+const isPendingTabChange = ref(false); // Flag for tab transition animation
 
-// Use the getter to get students relevant to the current teacher
+// Computed property to get the list of students assigned to the current teacher, applying filters and sorting
 const assignedStudents = computed(() => {
-  let students = studentStore.getStudentsForCurrentUser;
+  let students = studentStore.getStudentsForCurrentUser; // Get students from store getter
   
-  // Apply search filter
+  // Apply search filter (case-insensitive)
   if (searchQuery.value) {
     students = students.filter(student => 
       student.name.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -83,44 +85,49 @@ const assignedStudents = computed(() => {
     students = students.filter(student => !student.finalized);
   }
   
-  // Apply sorting
+  // Apply sorting based on selected field and order
   return students.sort((a, b) => {
     let comparison = 0;
     if (sortBy.value === 'name') {
       comparison = a.name.localeCompare(b.name);
     } else if (sortBy.value === 'progress') {
+      // Handle potentially null grades, treating null as -1 for sorting
       const aGrade = a.progressReportGrade ?? -1;
       const bGrade = b.progressReportGrade ?? -1;
       comparison = aGrade - bGrade;
     } else if (sortBy.value === 'final') {
+      // Handle potentially null grades
       const aGrade = a.finalReportGrade ?? -1;
       const bGrade = b.finalReportGrade ?? -1;
       comparison = aGrade - bGrade;
     } else if (sortBy.value === 'status') {
+      // Sort by finalized status (finalized = 1, in-progress = 0)
       comparison = (a.finalized ? 1 : 0) - (b.finalized ? 1 : 0);
     }
     
+    // Reverse comparison if sort order is descending
     return sortOrder.value === 'asc' ? comparison : -comparison;
   });
 });
 
-// Compute statistics for dashboard cards
+// Computed property to calculate statistics for the dashboard cards based on assigned students
 const stats = computed(() => ({
-  total: assignedStudents.value.length,
-  finalized: assignedStudents.value.filter(s => s.finalized).length,
-  inProgress: assignedStudents.value.filter(s => !s.finalized).length,
+  total: assignedStudents.value.length, // Total number of assigned students
+  finalized: assignedStudents.value.filter(s => s.finalized).length, // Number of students with finalized records
+  inProgress: assignedStudents.value.filter(s => !s.finalized).length, // Number of students with records in progress
   graded: assignedStudents.value.filter(s => 
-    s.progressReportGrade !== null || s.finalReportGrade !== null
+    s.progressReportGrade !== null || s.finalReportGrade !== null // Number of students with at least one grade entered
   ).length
 }));
 
+// Fetch initial student data when the component mounts
 onMounted(async () => {
   isLoading.value = true;
   error.value = null;
-  document.title = 'Teacher Dashboard';
+  document.title = 'Teacher Dashboard'; // Set page title
   try {
-    await studentStore.fetchStudents();
-    if (studentStore.error) throw new Error(studentStore.error);
+    await studentStore.fetchStudents(); // Fetch all students (store getter will filter)
+    if (studentStore.error) throw new Error(studentStore.error); // Check for errors from the store
   } catch (err: any) {
     error.value = err.message || 'Failed to load assigned students.';
     toast.error('Error loading data', { description: error.value || undefined });
@@ -129,48 +136,61 @@ onMounted(async () => {
   }
 });
 
-// Add debounced search implementation
+// Debounced function for handling student search input
 const debouncedSearch = useDebounce((query: string) => {
+  // Note: The current implementation searches across *all* students, 
+  // not just assigned ones. The computed property `assignedStudents` handles filtering.
+  // If the search API could filter by teacher, this could be optimized.
   if (query.length === 0) {
-    // If search is cleared, fetch all students
-    refreshData();
+    // If search is cleared, ensure the full list is available (refresh might not be strictly needed if store is up-to-date)
+    // refreshData(); // Consider if a full refresh is needed or just clearing the query is enough
     return;
   }
   
   isSearching.value = true;
-  studentStore.searchStudents(query)
+  studentStore.searchStudents(query) // Trigger search in the store
     .finally(() => {
       isSearching.value = false;
     });
-}, 300);
+}, 300); // 300ms debounce delay
 
-// Watch for changes in search query
+// Watch for changes in the search query and trigger the debounced search
 watch(searchQuery, (newQuery) => {
   debouncedSearch(newQuery);
 });
 
-// Open grade dialog with pre-populated data
+// Opens the grade dialog and pre-populates data for the selected student and report type
 const openGradeDialog = (studentId: string, reportType: 'progress' | 'final') => {
   const student = assignedStudents.value.find(s => s.id === studentId);
-  if (!student) return;
+  if (!student) return; // Should not happen if UI is correct
   
   selectedStudent.value = studentId;
   selectedReportType.value = reportType;
+  // Pre-fill grade input with existing grade, if any
   gradeInputValue.value = reportType === 'progress' 
-    ? student.progressReportGrade || null
-    : student.finalReportGrade || null;
-  gradeDialogOpen.value = true;
-  gradeSubmitError.value = null;
+    ? student.progressReportGrade ?? null // Use null if no grade exists
+    : student.finalReportGrade ?? null;
+  gradeDialogOpen.value = true; // Open the dialog
+  gradeSubmitError.value = null; // Reset any previous error messages
 };
 
-// Submit grade
+// Handles submitting the grade entered in the dialog
 const submitGrade = async () => {
-  if (!selectedStudent.value || gradeInputValue.value === null) return;
+  // Basic validation
+  if (!selectedStudent.value || gradeInputValue.value === null) {
+    gradeSubmitError.value = 'Grade value is required.';
+    return;
+  }
+  if (gradeInputValue.value < 0 || gradeInputValue.value > 100) {
+    gradeSubmitError.value = 'Grade must be between 0 and 100.';
+    return;
+  }
   
   isSubmitting.value = true;
   gradeSubmitError.value = null;
   
   try {
+    // Call the store action to update the grade
     await studentStore.gradeStudent(
       selectedStudent.value, 
       selectedReportType.value, 
@@ -178,7 +198,8 @@ const submitGrade = async () => {
     );
     
     toast.success('Grade submitted successfully');
-    gradeDialogOpen.value = false;
+    gradeDialogOpen.value = false; // Close dialog on success
+    // Reset dialog state
     selectedStudent.value = null;
     gradeInputValue.value = null;
   } catch (err: any) {
@@ -191,7 +212,7 @@ const submitGrade = async () => {
   }
 };
 
-// Finalize student record
+// Handles finalizing a student's record via the store action
 const finalizeRecord = async (studentId: string) => {
   try {
     await studentStore.finalizeRecord(studentId);
@@ -200,16 +221,17 @@ const finalizeRecord = async (studentId: string) => {
     const errorMessage = err.message || 'Failed to finalize student record.';
     toast.error('Error finalizing record', { description: errorMessage });
   }
+  // Note: The UI updates reactively based on the store change
 };
 
-// Refresh data
+// Refreshes the student data from the server
 const refreshData = async () => {
   isLoading.value = true;
   error.value = null;
   
   try {
-    await studentStore.fetchStudents();
-    if (studentStore.error) throw new Error(studentStore.error);
+    await studentStore.fetchStudents(); // Re-fetch student data
+    if (studentStore.error) throw new Error(studentStore.error); // Check for errors
     toast.success('Data refreshed successfully');
   } catch (err: any) {
     error.value = err.message || 'Failed to refresh data.';
@@ -219,25 +241,28 @@ const refreshData = async () => {
   }
 };
 
-// Reset filters
+// Resets all student filters and sorting to their default values
 const resetFilters = () => {
   searchQuery.value = '';
   statusFilter.value = 'all';
   sortBy.value = 'name';
   sortOrder.value = 'asc';
+  // Note: Clearing searchQuery might trigger debouncedSearch to refresh data if implemented that way
 };
 
-// Handle tab change with animation
+// Handles tab changes with a brief transition effect
 const handleTabChange = (value: string) => {
-  isPendingTabChange.value = true;
+  isPendingTabChange.value = true; // Start transition (fade out)
   activeTab.value = value;
+  // Allow time for fade-out before fade-in (controlled by CSS)
   setTimeout(() => {
-    isPendingTabChange.value = false;
-  }, 300);
+    isPendingTabChange.value = false; // End transition (fade in)
+  }, 300); // Duration should match CSS transition duration
 };
 
-// Get student name by ID for readability
-const getStudentName = (id: string) => {
+// Utility function to get a student's name by their ID for display purposes (e.g., in dialogs)
+const getStudentName = (id: string | null): string => {
+  if (!id) return 'Unknown Student';
   const student = assignedStudents.value.find(s => s.id === id);
   return student ? student.name : 'Unknown Student';
 }
@@ -257,11 +282,13 @@ const getStudentName = (id: string) => {
 
       <p class="text-muted-foreground mb-6">Welcome, {{ authStore.userName || 'Teacher' }}! Here you can manage your assigned students and their grades.</p>
 
+      <!-- Loading State -->
       <div v-if="isLoading" class="text-center py-10">
         <Loader2 class="h-8 w-8 animate-spin mx-auto mb-2" />
         <p>Loading assigned students...</p>
       </div>
 
+      <!-- Error State -->
       <div v-else-if="error" class="bg-destructive/10 text-destructive p-4 rounded-md flex items-center mb-6">
         <AlertCircle class="mr-2 h-5 w-5" />
         <div>
@@ -273,6 +300,7 @@ const getStudentName = (id: string) => {
         </Button>
       </div>
 
+      <!-- Main Content Area -->
       <div v-else>
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -321,10 +349,11 @@ const getStudentName = (id: string) => {
           </Card>
         </div>
 
-        <!-- Main Content -->
+        <!-- Main Content Tabs -->
         <Tabs v-model="activeTab" class="w-full">
           <div class="border-b mb-6">
             <TabsList class="inline-flex h-12 items-center justify-center rounded-md bg-muted p-1 w-auto">
+              <!-- Assigned Students Tab Trigger -->
               <TabsTrigger 
                 value="assigned" 
                 class="inline-flex items-center justify-center whitespace-nowrap px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
@@ -334,6 +363,7 @@ const getStudentName = (id: string) => {
                 Assigned Students
                 <Badge class="ml-2 bg-blue-100 text-blue-800">{{ stats.total }}</Badge>
               </TabsTrigger>
+              <!-- Report Overview Tab Trigger -->
               <TabsTrigger 
                 value="reports" 
                 class="inline-flex items-center justify-center whitespace-nowrap px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
@@ -345,7 +375,7 @@ const getStudentName = (id: string) => {
             </TabsList>
           </div>
           
-          <!-- Students Tab Content -->
+          <!-- Assigned Students Tab Content -->
           <TabsContent 
             value="assigned" 
             class="mt-0 transition-all"
@@ -364,8 +394,10 @@ const getStudentName = (id: string) => {
                   />
                   <Loader2 v-if="isSearching" class="absolute right-2.5 top-2.5 h-4 w-4 animate-spin" />
                 </div>
+                <!-- Add filter dropdowns here if needed -->
               </div>
               
+              <!-- Quick Stats Badges -->
               <div class="flex items-center gap-2">
                 <Badge variant="outline" class="bg-green-50/50">
                   <CheckCircle class="h-3 w-3 mr-1 text-green-600" /> 
@@ -378,7 +410,7 @@ const getStudentName = (id: string) => {
               </div>
             </div>
 
-            <!-- Students Table -->
+            <!-- Students Table Card -->
             <div class="bg-card rounded-lg border shadow-sm overflow-hidden">
               <div class="p-4 border-b">
                 <h3 class="text-lg font-medium">Assigned Students</h3>
@@ -387,13 +419,16 @@ const getStudentName = (id: string) => {
                 </p>
               </div>
               
-              <div v-if="assignedStudents.length === 0" class="bg-muted p-8 text-center">
+              <!-- Empty State: No Assigned Students -->
+              <div v-if="assignedStudents.length === 0 && !searchQuery" class="bg-muted p-8 text-center">
                 <p class="text-muted-foreground">You currently have no students assigned.</p>
               </div>
-              <div v-else-if="searchQuery && assignedStudents.length === 0" class="bg-muted p-8 text-center">
+              <!-- Empty State: No Matching Students -->
+              <div v-else-if="assignedStudents.length === 0 && searchQuery" class="bg-muted p-8 text-center">
                 <p class="text-muted-foreground">No students match your search criteria.</p>
                 <Button variant="link" @click="resetFilters" class="mt-2">Reset Filters</Button>
               </div>
+              <!-- Student Table -->
               <div v-else>
                 <Table>
                   <TableHeader class="bg-muted/50">
@@ -410,12 +445,13 @@ const getStudentName = (id: string) => {
                       v-for="student in assignedStudents" 
                       :key="student.id" 
                       :class="[
-                        studentStore.isProcessing(student.id) ? 'opacity-70' : '',
-                        student.finalized ? 'bg-green-50/30' : ''
+                        studentStore.isProcessing(student.id) ? 'opacity-70' : '', // Dim row if processing
+                        student.finalized ? 'bg-green-50/30' : '' // Highlight finalized rows
                       ]"
                     >
                       <TableCell>{{ student.name }}</TableCell>
                       <TableCell>
+                        <!-- Progress Grade Display -->
                         <div class="flex items-center gap-1">
                           <Badge 
                             v-if="student.progressReportGrade !== null" 
@@ -428,6 +464,7 @@ const getStudentName = (id: string) => {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <!-- Final Grade Display -->
                         <div class="flex items-center gap-1">
                           <Badge 
                             v-if="student.finalReportGrade !== null" 
@@ -440,6 +477,7 @@ const getStudentName = (id: string) => {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <!-- Status Badge -->
                         <Badge v-if="student.finalized" variant="outline" class="bg-green-50 text-green-700 border-green-200">
                           <CheckCircle class="h-3 w-3 mr-1" /> Finalized
                         </Badge>
@@ -448,7 +486,9 @@ const getStudentName = (id: string) => {
                         </Badge>
                       </TableCell>
                       <TableCell class="text-right">
+                        <!-- Action Buttons -->
                         <div class="flex justify-end gap-2">
+                          <!-- Grade Progress Button (only if not finalized) -->
                           <Button 
                             v-if="!student.finalized"
                             variant="outline" 
@@ -458,6 +498,7 @@ const getStudentName = (id: string) => {
                           >
                             <Edit class="h-4 w-4 mr-1" /> Progress
                           </Button>
+                          <!-- Grade Final Button (only if not finalized) -->
                           <Button 
                             v-if="!student.finalized"
                             variant="outline" 
@@ -467,6 +508,7 @@ const getStudentName = (id: string) => {
                           >
                             <Edit class="h-4 w-4 mr-1" /> Final
                           </Button>
+                          <!-- Finalize Confirmation Dialog Trigger (only if not finalized and final grade exists) -->
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button 
@@ -496,9 +538,11 @@ const getStudentName = (id: string) => {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
+                          <!-- Processing Indicator -->
                           <div v-if="studentStore.isProcessing(student.id)" class="inline-flex ml-2">
                             <Loader2 class="h-4 w-4 animate-spin" />
                           </div>
+                          <!-- Message for finalized records -->
                           <div v-if="student.finalized" class="text-gray-500 text-sm italic">No further changes can be made</div>
                         </div>
                       </TableCell>
@@ -525,7 +569,7 @@ const getStudentName = (id: string) => {
               
               <div class="p-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <!-- Progress Reports Card -->
+                  <!-- Progress Reports Summary Card -->
                   <div class="border rounded-md overflow-hidden">
                     <div class="bg-blue-50/50 p-3 border-b">
                       <h4 class="font-medium flex items-center">
@@ -541,11 +585,13 @@ const getStudentName = (id: string) => {
                             {{ assignedStudents.filter(s => s.progressReportGrade !== null).length }} of {{ assignedStudents.length }}
                           </span>
                         </div>
+                        <!-- Progress Bar -->
                         <div class="w-full bg-gray-200 rounded-full h-2.5">
                           <div class="bg-blue-600 h-2.5 rounded-full" :style="{
                             width: `${(assignedStudents.filter(s => s.progressReportGrade !== null).length / Math.max(assignedStudents.length, 1)) * 100}%`
                           }"></div>
                         </div>
+                        <!-- Recently Graded List -->
                         <div class="pt-2">
                           <h5 class="text-sm font-medium mb-2">Recently Graded</h5>
                           <div class="space-y-2">
@@ -564,7 +610,7 @@ const getStudentName = (id: string) => {
                     </div>
                   </div>
                   
-                  <!-- Final Reports Card -->
+                  <!-- Final Reports Summary Card -->
                   <div class="border rounded-md overflow-hidden">
                     <div class="bg-green-50/50 p-3 border-b">
                       <h4 class="font-medium flex items-center">
@@ -580,11 +626,13 @@ const getStudentName = (id: string) => {
                             {{ assignedStudents.filter(s => s.finalReportGrade !== null).length }} of {{ assignedStudents.length }}
                           </span>
                         </div>
+                        <!-- Progress Bar -->
                         <div class="w-full bg-gray-200 rounded-full h-2.5">
                           <div class="bg-green-600 h-2.5 rounded-full" :style="{
                             width: `${(assignedStudents.filter(s => s.finalReportGrade !== null).length / Math.max(assignedStudents.length, 1)) * 100}%`
                           }"></div>
                         </div>
+                        <!-- Recently Graded List -->
                         <div class="pt-2">
                           <h5 class="text-sm font-medium mb-2">Recently Graded</h5>
                           <div class="space-y-2">
@@ -604,13 +652,14 @@ const getStudentName = (id: string) => {
                   </div>
                 </div>
                 
-                <!-- Overall Status -->
+                <!-- Overall Status Summary -->
                 <div class="mt-6 border rounded-md overflow-hidden">
                   <div class="bg-gray-50 p-3 border-b">
                     <h4 class="font-medium">Overall Status</h4>
                   </div>
                   <div class="p-4">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <!-- Finalized Students Status -->
                       <div class="flex flex-col">
                         <span class="text-sm text-muted-foreground">Finalized Students</span>
                         <div class="text-2xl font-bold mt-1">{{ stats.finalized }}</div>
@@ -622,6 +671,7 @@ const getStudentName = (id: string) => {
                         <span class="text-xs text-muted-foreground mt-1">{{ Math.round((stats.finalized / Math.max(stats.total, 1)) * 100) }}% complete</span>
                       </div>
                       
+                      <!-- Progress Reports Graded Status -->
                       <div class="flex flex-col">
                         <span class="text-sm text-muted-foreground">Progress Reports Graded</span>
                         <div class="text-2xl font-bold mt-1">{{ assignedStudents.filter(s => s.progressReportGrade !== null).length }}</div>
@@ -635,6 +685,7 @@ const getStudentName = (id: string) => {
                         </span>
                       </div>
                       
+                      <!-- Final Reports Graded Status -->
                       <div class="flex flex-col">
                         <span class="text-sm text-muted-foreground">Final Reports Graded</span>
                         <div class="text-2xl font-bold mt-1">{{ assignedStudents.filter(s => s.finalReportGrade !== null).length }}</div>
@@ -658,13 +709,13 @@ const getStudentName = (id: string) => {
     </div>
   </AppLayout>
   
-  <!-- Grade Dialog -->
+  <!-- Grade Student Dialog -->
   <Dialog v-model:open="gradeDialogOpen">
     <DialogContent class="sm:max-w-[425px]">
       <DialogHeader>
         <DialogTitle>{{ selectedReportType === 'progress' ? 'Progress Report' : 'Final Report' }} Grade</DialogTitle>
         <DialogDescription>
-          Enter the grade for {{ getStudentName(selectedStudent || '') }}'s {{ selectedReportType }} report.
+          Enter the grade for {{ getStudentName(selectedStudent) }}'s {{ selectedReportType }} report.
         </DialogDescription>
       </DialogHeader>
       <div class="grid gap-4 py-4">
@@ -683,13 +734,14 @@ const getStudentName = (id: string) => {
               placeholder="Enter grade (0-100)"
               :disabled="isSubmitting"
             />
+            <!-- Display validation/submission errors -->
             <p v-if="gradeSubmitError" class="text-red-500 text-sm mt-2">{{ gradeSubmitError }}</p>
           </div>
         </div>
       </div>
       <DialogFooter>
         <Button variant="outline" @click="gradeDialogOpen = false" :disabled="isSubmitting">Cancel</Button>
-        <Button @click="submitGrade" :disabled="isSubmitting || gradeInputValue === null">
+        <Button @click="submitGrade" :disabled="isSubmitting || gradeInputValue === null || gradeInputValue < 0 || gradeInputValue > 100">
           <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
           Submit Grade
         </Button>
@@ -699,6 +751,7 @@ const getStudentName = (id: string) => {
 </template>
 
 <style scoped>
+/* Basic transition for tab content opacity and other properties */
 .transition-all {
   transition: all 0.2s ease;
 }

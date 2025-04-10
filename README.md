@@ -13,11 +13,10 @@ HKU-Admin-System/
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── public/
-│   │   └── vite.svg
+│   │   ├── login-bg.jpg
+│   │   └── logo.svg
 │   ├── src/
 │   │   ├── App.vue
-│   │   ├── assets/
-│   │   │   └── vue.svg
 │   │   ├── components/
 │   │   │   ├── common/        # Common components (e.g., ConfirmationModal)
 │   │   │   ├── students/      # Student-related components
@@ -39,6 +38,7 @@ HKU-Admin-System/
 │   │   ├── views/             # Page-level components
 │   │   │   ├── AdminDashboard.vue
 │   │   │   ├── LoginPage.vue
+│   │   │   ├── NotFound.vue      # 404 page
 │   │   │   └── TeacherDashboard.vue
 │   │   └── vite-env.d.ts
 │   ├── tailwind.config.ts
@@ -67,6 +67,7 @@ HKU-Admin-System/
 * **Manage Student Lists:** Add new students to the system.
 * **Assign Students to Teachers:** Allocate students to specific teachers (not allowed for finalized records).
 * **View All Student Status:** Display a comprehensive overview of all students, including their assigned teacher, progress and final report grades, and finalization status.
+* **Unfinalize Records:** Revert a finalized record to allow further modifications.
 
 ### Teacher
 
@@ -161,6 +162,9 @@ The backend provides the following RESTful API endpoints:
 * **Teacher Endpoints:**
   - `PUT /api/students/:id/grade` - Grade a student's progress or final report (Teacher only)
   - `PUT /api/students/:id/finalize` - Finalize a student's record (Teacher only, requires final grade)
+  
+* **Common Endpoints:**
+  - `GET /api/students/search` - Search students by name (Admin/Teacher)
 
 For API testing, you can use curl commands as described in the development documentation.
 
