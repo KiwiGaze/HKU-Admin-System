@@ -60,6 +60,9 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('role');
       localStorage.removeItem('userId');
       localStorage.removeItem('userName');
+
+      // Reset document title
+      document.title = 'HKU Admin System';
     }
   }
 });

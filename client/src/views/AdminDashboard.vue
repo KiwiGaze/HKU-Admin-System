@@ -14,9 +14,12 @@ const teacherStore = useTeacherStore();
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 
+
+
 onMounted(async () => {
   isLoading.value = true;
   error.value = null;
+  document.title = 'Admin Dashboard';
   try {
     await Promise.all([
       studentStore.fetchStudents(),

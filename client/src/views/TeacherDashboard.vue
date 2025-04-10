@@ -20,6 +20,7 @@ const assignedStudents = computed(() => studentStore.getStudentsForCurrentUser);
 onMounted(async () => {
   isLoading.value = true;
   error.value = null;
+  document.title = 'Teacher Dashboard';
   try {
     // Fetch all students; the getter will filter them.
     // Alternatively, modify API/store to fetch only assigned students if performance is a concern.
