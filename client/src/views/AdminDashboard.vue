@@ -1,11 +1,11 @@
 // src/views/AdminDashboard.vue
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import AppLayout from '@/components/common/AppLayout.vue';
 import { useStudentStore } from '@/stores/studentStore';
 import { useTeacherStore } from '@/stores/teacherStore';
 import { toast } from 'vue-sonner';
-import { UserPlus, AlertCircle, UserCheck, Loader2, CheckCircle, X, Users, User, RefreshCw, Trash2 } from 'lucide-vue-next';
+import { UserPlus, AlertCircle, UserCheck, Loader2, CheckCircle, X, Users, User, RefreshCw, Trash2, Search, SlidersHorizontal } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -46,7 +46,17 @@ const teacherStore = useTeacherStore();
 
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+
+// Enhanced tab state
 const activeTab = ref('students');
+const isPendingTabChange = ref(false);
+
+// Enhanced filter state
+const studentSearchQuery = ref('');
+const showFinalized = ref(true);
+const showInProgress = ref(true);
+const studentSortBy = ref('name');
+const studentSortOrder = ref('asc');
 
 // Dialog state for adding student
 const addStudentDialogOpen = ref(false);
@@ -222,6 +232,66 @@ const refreshData = async () => {
     isLoading.value = false;
   }
 };
+
+// Handle tab change with animation
+const handleTabChange = (value: string) => {
+  isPendingTabChange.value = true;
+  activeTab.value = value;
+  setTimeout(() => {
+    isPendingTabChange.value = false;
+  }, 300);
+};
+
+// Filter students based on search and status filters
+const filteredStudents = computed(() => {
+  return studentStore.students.filter(student => {
+    // Search filter
+    const matchesSearch = student.name.toLowerCase().includes(studentSearchQuery.value.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = (
+      (student.finalized && showFinalized.value) ||
+      (!student.finalized && showInProgress.value)
+    );
+    
+    return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    // Sort by selected field
+    let comparison = 0;
+    if (studentSortBy.value === 'name') {
+      comparison = a.name.localeCompare(b.name);
+    } else if (studentSortBy.value === 'progress') {
+      const aGrade = a.progressReportGrade ?? -1;
+      const bGrade = b.progressReportGrade ?? -1;
+      comparison = aGrade - bGrade;
+    } else if (studentSortBy.value === 'final') {
+      const aGrade = a.finalReportGrade ?? -1;
+      const bGrade = b.finalReportGrade ?? -1;
+      comparison = aGrade - bGrade;
+    }
+    
+    // Apply sort order
+    return studentSortOrder.value === 'asc' ? comparison : -comparison;
+  });
+});
+
+// Toggle filters
+const toggleFinalizedFilter = () => {
+  showFinalized.value = !showFinalized.value;
+};
+
+const toggleInProgressFilter = () => {
+  showInProgress.value = !showInProgress.value;
+};
+
+// Reset filters
+const resetFilters = () => {
+  studentSearchQuery.value = '';
+  showFinalized.value = true;
+  showInProgress.value = true;
+  studentSortBy.value = 'name';
+  studentSortOrder.value = 'asc';
+};
 </script>
 
 <template>
@@ -256,24 +326,50 @@ const refreshData = async () => {
 
       <div v-else>
         <Tabs v-model="activeTab" class="w-full">
-          <TabsList class="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="students" class="flex items-center gap-2">
-              <Users class="h-4 w-4" />
-              Student Management
-            </TabsTrigger>
-            <TabsTrigger value="teachers" class="flex items-center gap-2">
-              <User class="h-4 w-4" />
-              Teacher Information
-            </TabsTrigger>
-          </TabsList>
+          <div class="border-b mb-6">
+            <TabsList class="inline-flex h-12 items-center justify-center rounded-md bg-muted p-1 w-auto">
+              <TabsTrigger 
+                value="students" 
+                class="inline-flex items-center justify-center whitespace-nowrap px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
+                @click="handleTabChange('students')"
+              >
+                <Users class="h-4 w-4 mr-2" />
+                Student Management
+                <Badge class="hidden sm:block ml-2 bg-blue-100 text-blue-800">{{ studentStore.students.length }}</Badge>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="teachers" 
+                class="inline-flex items-center justify-center whitespace-nowrap px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
+                @click="handleTabChange('teachers')"
+              >
+                <User class="h-4 w-4 mr-2" />
+                Teacher Information
+                <Badge class="hidden sm:block ml-2 bg-blue-100 text-blue-800">{{ teacherStore.teachers.length }}</Badge>
+              </TabsTrigger>
+            </TabsList>
+          </div>
           
           <!-- Students Tab Content -->
-          <TabsContent value="students" class="mt-0">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium">Student Management</h3>
+          <TabsContent 
+            value="students" 
+            class="mt-0 transition-all"
+            :class="{ 'opacity-0': isPendingTabChange && activeTab === 'students', 'opacity-100': !isPendingTabChange && activeTab === 'students' }"
+          >
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 py-4 rounded-lg">
+              <div class="flex items-center space-x-2 flex-1">
+                <div class="relative w-full max-w-xs">
+                  <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search students..." 
+                    class="pl-8"
+                    v-model="studentSearchQuery" 
+                  />
+                </div> 
+              </div>
+              
               <Dialog v-model:open="addStudentDialogOpen">
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <Button size="sm" class="whitespace-nowrap">
                     <UserPlus class="h-4 w-4 mr-2" />
                     Add Student
                   </Button>
@@ -309,112 +405,158 @@ const refreshData = async () => {
               </Dialog>
             </div>
             
-            <div v-if="studentStore.students.length === 0" class="bg-muted p-8 text-center rounded-md">
-              <p class="text-muted-foreground">No students in the system. Add a student to get started.</p>
-            </div>
-            <div v-else class="border rounded-md overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Student Name</TableHead>
-                    <TableHead>Assigned Teacher</TableHead>
-                    <TableHead>Progress Grade</TableHead>
-                    <TableHead>Final Grade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead class="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow v-for="student in studentStore.students" :key="student.id"
-                    :class="studentStore.isProcessing(student.id) ? 'opacity-70' : ''"
-                  >
-                    <TableCell>{{ student.name }}</TableCell>
-                    <TableCell>{{ teacherStore.getTeacherName(student.assignedTeacherId) }}</TableCell>
-                    <TableCell>
-                      <span v-if="typeof student.progressReportGrade === 'number'">
-                        {{ student.progressReportGrade }}/100
-                      </span>
-                      <span v-else class="text-muted-foreground">Not graded</span>
-                    </TableCell>
-                    <TableCell>
-                      <span v-if="typeof student.finalReportGrade === 'number'">
-                        {{ student.finalReportGrade }}/100
-                      </span>
-                      <span v-else class="text-muted-foreground">Not graded</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge v-if="student.finalized" variant="outline" class="bg-green-50 text-green-700 border-green-200">
-                        <CheckCircle class="h-3 w-3 mr-1" /> Finalized
-                      </Badge>
-                      <Badge v-else variant="outline" class="bg-yellow-50 text-yellow-700 border-yellow-200">
-                        In Progress
-                      </Badge>
-                    </TableCell>
-                    <TableCell class="text-right">
-                      <div class="flex justify-end space-x-2">
-                        <Button 
-                          v-if="!student.finalized"
-                          variant="outline" 
-                          size="sm"
-                          @click="openAssignTeacherDialog(student.id)"
-                          :disabled="studentStore.isProcessing(student.id)"
-                        >
-                          <UserCheck class="h-4 w-4 mr-1" /> Assign Teacher
-                        </Button>
-                        <Button
-                          v-if="student.finalized"
-                          variant="outline"
-                          size="sm"
-                          @click="openUnfinalizeDialog(student.id)"
-                          :disabled="studentStore.isProcessing(student.id)"
-                        >
-                          <X class="h-4 w-4 mr-1" /> Unfinalize
-                        </Button>
-                        <Button
-                          v-if="!student.finalized"
-                          variant="destructive"
-                          size="sm"
-                          @click="openDeleteDialog(student.id)"
-                          :disabled="studentStore.isProcessing(student.id)"
-                        >
-                          <Trash2 class="h-4 w-4 mr-1" /> Delete
-                        </Button>
-                        <div v-if="studentStore.isProcessing(student.id)" class="inline-flex ml-2">
-                          <Loader2 class="h-4 w-4 animate-spin" />
+            <div class="bg-card rounded-lg border shadow-sm overflow-hidden">
+              <div class="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 class="text-lg font-medium">Student Management</h3>
+                
+                <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Badge variant="outline" class="cursor-pointer" :class="showFinalized ? 'bg-green-50' : ''" @click="toggleFinalizedFilter">
+                    <CheckCircle v-if="showFinalized" class="h-3 w-3 mr-1" /> 
+                    Finalized ({{ studentStore.students.filter(s => s.finalized).length }})
+                  </Badge>
+                  
+                  <Badge variant="outline" class="cursor-pointer" :class="showInProgress ? 'bg-yellow-50' : ''" @click="toggleInProgressFilter">
+                    <CheckCircle v-if="showInProgress" class="h-3 w-3 mr-1" />
+                    In Progress ({{ studentStore.students.filter(s => !s.finalized).length }})
+                  </Badge>
+                  
+                  <span class="hidden sm:inline">|</span>
+                  <span>Total: {{ studentStore.students.length }}</span>
+                </div>
+              </div>
+            
+              <div v-if="studentStore.students.length === 0" class="bg-muted p-8 text-center">
+                <p class="text-muted-foreground">No students in the system. Add a student to get started.</p>
+              </div>
+              <div v-else-if="filteredStudents.length === 0" class="bg-muted p-8 text-center">
+                <p class="text-muted-foreground">No students match your search criteria.</p>
+                <Button variant="link" @click="resetFilters" class="mt-2">Reset Filters</Button>
+              </div>
+              <div v-else>
+                <Table>
+                  <TableHeader class="bg-muted/50">
+                    <TableRow>
+                      <TableHead>Student Name</TableHead>
+                      <TableHead>Assigned Teacher</TableHead>
+                      <TableHead>Progress Grade</TableHead>
+                      <TableHead>Final Grade</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead class="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow v-for="student in filteredStudents" :key="student.id"
+                      :class="[
+                        studentStore.isProcessing(student.id) ? 'opacity-70' : '',
+                        student.finalized ? 'bg-green-50/30' : ''
+                      ]"
+                    >
+                      <TableCell>{{ student.name }}</TableCell>
+                      <TableCell>{{ teacherStore.getTeacherName(student.assignedTeacherId) }}</TableCell>
+                      <TableCell>
+                        <span v-if="typeof student.progressReportGrade === 'number'">
+                          {{ student.progressReportGrade }}/100
+                        </span>
+                        <span v-else class="text-muted-foreground">Not graded</span>
+                      </TableCell>
+                      <TableCell>
+                        <span v-if="typeof student.finalReportGrade === 'number'">
+                          {{ student.finalReportGrade }}/100
+                        </span>
+                        <span v-else class="text-muted-foreground">Not graded</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge v-if="student.finalized" variant="outline" class="bg-green-50 text-green-700 border-green-200">
+                          <CheckCircle class="h-3 w-3 mr-1" /> Finalized
+                        </Badge>
+                        <Badge v-else variant="outline" class="bg-yellow-50 text-yellow-700 border-yellow-200">
+                          In Progress
+                        </Badge>
+                      </TableCell>
+                      <TableCell class="text-right">
+                        <div class="flex justify-end space-x-2">
+                          <Button 
+                            v-if="!student.finalized"
+                            variant="outline" 
+                            size="sm"
+                            @click="openAssignTeacherDialog(student.id)"
+                            :disabled="studentStore.isProcessing(student.id)"
+                          >
+                            <UserCheck class="h-4 w-4 mr-1" /> Assign Teacher
+                          </Button>
+                          <Button
+                            v-if="student.finalized"
+                            variant="outline"
+                            size="sm"
+                            @click="openUnfinalizeDialog(student.id)"
+                            :disabled="studentStore.isProcessing(student.id)"
+                          >
+                            <X class="h-4 w-4 mr-1" /> Unfinalize
+                          </Button>
+                          <Button
+                            v-if="!student.finalized"
+                            variant="destructive"
+                            size="sm"
+                            @click="openDeleteDialog(student.id)"
+                            :disabled="studentStore.isProcessing(student.id)"
+                          >
+                            <Trash2 class="h-4 w-4 mr-1" /> Delete
+                          </Button>
+                          <div v-if="studentStore.isProcessing(student.id)" class="inline-flex ml-2">
+                            <Loader2 class="h-4 w-4 animate-spin" />
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </TabsContent>
           
           <!-- Teachers Tab Content -->
-          <TabsContent value="teachers" class="mt-0">
-            <h3 class="text-lg font-medium mb-4">Teacher Information</h3>
-            <div v-if="teacherStore.teachers.length === 0" class="bg-muted p-8 text-center rounded-md">
-              <p class="text-muted-foreground">No teachers in the system.</p>
-            </div>
-            <div v-else class="border rounded-md overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Teacher Name</TableHead>
-                    <TableHead>Assigned Students</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow v-for="teacher in teacherStore.teachers" :key="teacher.id">
-                    <TableCell class="font-mono text-xs">{{ teacher.id }}</TableCell>
-                    <TableCell>{{ teacher.name }}</TableCell>
-                    <TableCell>
-                      {{ studentStore.students.filter(s => s.assignedTeacherId === teacher.id).length }}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+          <TabsContent 
+            value="teachers" 
+            class="mt-0 transition-all"
+            :class="{ 'opacity-0': isPendingTabChange && activeTab === 'teachers', 'opacity-100': !isPendingTabChange && activeTab === 'teachers' }"
+          >
+            <div class="bg-card rounded-lg border shadow-sm overflow-hidden">
+              <div class="p-4 border-b">
+                <h3 class="text-lg font-medium">Teacher Information</h3>
+                <p class="text-sm text-muted-foreground mt-1">
+                  View all teachers and their assigned students
+                </p>
+              </div>
+              
+              <div v-if="teacherStore.teachers.length === 0" class="bg-muted p-8 text-center">
+                <p class="text-muted-foreground">No teachers in the system.</p>
+              </div>
+              <div v-else>
+                <Table>
+                  <TableHeader class="bg-muted/50">
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Teacher Name</TableHead>
+                      <TableHead>Assigned Students</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow v-for="teacher in teacherStore.teachers" :key="teacher.id">
+                      <TableCell class="font-mono text-xs">{{ teacher.id }}</TableCell>
+                      <TableCell>{{ teacher.name }}</TableCell>
+                      <TableCell>
+                        <Badge class="bg-blue-100 text-blue-800 border-none">
+                          {{ studentStore.students.filter(s => s.assignedTeacherId === teacher.id).length }}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm">View Details</Button>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -497,3 +639,9 @@ const refreshData = async () => {
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+.transition-all {
+  transition: all 0.2s ease;
+}
+</style>
