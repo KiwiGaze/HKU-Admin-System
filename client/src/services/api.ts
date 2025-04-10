@@ -84,3 +84,11 @@ export const deleteStudentApi = async (studentId: string) => {
   const response = await api.delete(`/api/students/${studentId}`);
   return response.data;
 }
+
+// Search students API (Admin/Teacher)
+export const searchStudentsApi = async (searchName: string) => {
+  const response = await api.get('/api/students/search', {
+    params: { name: searchName }
+  });
+  return response.data;
+};

@@ -1,11 +1,11 @@
 // src/views/AdminDashboard.vue
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import AppLayout from '@/components/common/AppLayout.vue';
 import { useStudentStore } from '@/stores/studentStore';
 import { useTeacherStore } from '@/stores/teacherStore';
 import { toast } from 'vue-sonner';
-import { UserPlus, AlertCircle, UserCheck, Loader2, CheckCircle, X, Users, User, RefreshCw, Trash2, Search, SlidersHorizontal } from 'lucide-vue-next';
+import { UserPlus, AlertCircle, UserCheck, Loader2, CheckCircle, X, Users, User, RefreshCw, Trash2, Search } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -40,6 +40,7 @@ import {
   TabsList,
   TabsTrigger
 } from '@/components/ui/tabs';
+import { useDebounce } from '@/composables/useDebounce';
 
 const studentStore = useStudentStore();
 const teacherStore = useTeacherStore();
@@ -53,6 +54,7 @@ const isPendingTabChange = ref(false);
 
 // Enhanced filter state
 const studentSearchQuery = ref('');
+const isSearching = ref(false);
 const showFinalized = ref(true);
 const showInProgress = ref(true);
 const studentSortBy = ref('name');
@@ -80,6 +82,25 @@ const isDeletingStudent = ref(false);
 const unfinalizeDialogOpen = ref(false);
 const studentToUnfinalize = ref<string | null>(null);
 const isUnfinalizingStudent = ref(false);
+
+const debouncedSearch = useDebounce((query: string) => {
+  if (query.length === 0) {
+    // If search is cleared, fetch all students
+    refreshData();
+    return;
+  }
+  
+  isSearching.value = true;
+  studentStore.searchStudents(query)
+    .finally(() => {
+      isSearching.value = false;
+    });
+}, 300);
+
+// Watch for changes in search query
+watch(studentSearchQuery, (newQuery) => {
+  debouncedSearch(newQuery);
+});
 
 onMounted(async () => {
   isLoading.value = true;
@@ -363,7 +384,9 @@ const resetFilters = () => {
                     placeholder="Search students..." 
                     class="pl-8"
                     v-model="studentSearchQuery" 
+                    :disabled="isSearching"
                   />
+                  <Loader2 v-if="isSearching" class="absolute right-2.5 top-2.5 h-4 w-4 animate-spin" />
                 </div> 
               </div>
               

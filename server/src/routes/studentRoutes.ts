@@ -303,4 +303,46 @@ router.delete('/students/:id', async (req: Request, res: Response, next: NextFun
     }
 });
 
+// GET /api/students/search - Search Students (Admin/Teacher)
+router.get('/students/search', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const role = getCurrentUserRole(req);
+    const userId = getCurrentUserId(req);
+    const searchName = typeof req.query.name === 'string' ? req.query.name : '';
+
+    if (role !== 'admin' && role !== 'teacher') {
+        res.status(403).json({ message: 'Forbidden: Access denied.' });
+        return;
+    }
+
+    try {
+        let students: StudentInstance[] = [];
+        
+        if (role === 'admin') {
+            students = await Student.findAll({
+                where: {
+                    name: {
+                        [Op.like]: `%${searchName}%`
+                    }
+                },
+                include: [Teacher]
+            });
+        } else if (role === 'teacher' && userId) {
+            students = await Student.findAll({
+                where: {
+                    assignedTeacherId: userId,
+                    name: {
+                        [Op.like]: `%${searchName}%`
+                    }
+                },
+                include: [Teacher]
+            });
+        }
+
+        res.json(students || []);
+    } catch (error) {
+        console.error("Error searching students:", error);
+        next(error);
+    }
+});
+
 export default router;

@@ -8,7 +8,8 @@ import {
   gradeStudentApi, 
   finalizeRecordApi,
   unfinalizeRecordApi,
-  deleteStudentApi
+  deleteStudentApi,
+  searchStudentsApi
 } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { Student } from '@/types/models';
@@ -191,6 +192,23 @@ export const useStudentStore = defineStore('student', {
         throw error;
       } finally {
         this.processingIds = this.processingIds.filter(id => id !== studentId);
+      }
+    },
+
+    async searchStudents(searchName: string) {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        const students = await searchStudentsApi(searchName);
+        this.students = students; // Replace current students with search results
+        return students;
+      } catch (error: any) {
+        this.error = error.response?.data?.message || 'Failed to search students';
+        console.error('Error searching students:', error);
+        throw error;
+      } finally {
+        this.loading = false;
       }
     }
   },

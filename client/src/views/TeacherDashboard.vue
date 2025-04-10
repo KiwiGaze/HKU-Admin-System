@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import AppLayout from '@/components/common/AppLayout.vue';
 import { useStudentStore } from '@/stores/studentStore';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'vue-sonner';
-import { CheckCircle, AlertCircle, Edit, Lock, Loader2, RefreshCw, Users, Search, Clock, Award, Filter, SlidersHorizontal, CheckSquare, BookOpen } from 'lucide-vue-next';
+import { CheckCircle, AlertCircle, Edit, Lock, Loader2, RefreshCw, Users, Search, Clock, Award, CheckSquare, BookOpen } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -37,8 +37,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useDebounce } from '@/composables/useDebounce';
 
 const studentStore = useStudentStore();
 const authStore = useAuthStore();
@@ -56,6 +56,7 @@ const gradeSubmitError = ref<string | null>(null);
 
 // Search and filter state
 const searchQuery = ref('');
+const isSearching = ref(false);
 const statusFilter = ref('all');
 const sortBy = ref('name');
 const sortOrder = ref('asc');
@@ -126,6 +127,26 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
   }
+});
+
+// Add debounced search implementation
+const debouncedSearch = useDebounce((query: string) => {
+  if (query.length === 0) {
+    // If search is cleared, fetch all students
+    refreshData();
+    return;
+  }
+  
+  isSearching.value = true;
+  studentStore.searchStudents(query)
+    .finally(() => {
+      isSearching.value = false;
+    });
+}, 300);
+
+// Watch for changes in search query
+watch(searchQuery, (newQuery) => {
+  debouncedSearch(newQuery);
 });
 
 // Open grade dialog with pre-populated data
@@ -339,7 +360,9 @@ const getStudentName = (id: string) => {
                     placeholder="Search students..." 
                     class="pl-8"
                     v-model="searchQuery" 
+                    :disabled="isSearching"
                   />
+                  <Loader2 v-if="isSearching" class="absolute right-2.5 top-2.5 h-4 w-4 animate-spin" />
                 </div>
               </div>
               
