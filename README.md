@@ -154,10 +154,13 @@ The backend provides the following RESTful API endpoints:
   - `GET /api/students` - Get all students (Admin sees all, Teacher sees assigned only)
   - `POST /api/students` - Create a new student (Admin only)
   - `PUT /api/students/:id/assign` - Assign a teacher to a student (Admin only)
+  - `PUT /api/students/:id/unassign` - Unassign a teacher from a student (Admin only)
+  - `PUT /api/students/:id/unfinalize` - Unfinalize a student record (Admin only)
+  - `DELETE /api/students/:id` - Delete a student record (Admin only)
 
 * **Teacher Endpoints:**
-  - `PUT /api/students/:id/grade` - Grade a student's progress or final report
-  - `PUT /api/students/:id/finalize` - Finalize a student's record (requires final grade)
+  - `PUT /api/students/:id/grade` - Grade a student's progress or final report (Teacher only)
+  - `PUT /api/students/:id/finalize` - Finalize a student's record (Teacher only, requires final grade)
 
 For API testing, you can use curl commands as described in the development documentation.
 
