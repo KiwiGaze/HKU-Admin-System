@@ -169,4 +169,48 @@ router.put('/students/:id/grade', async (req: Request, res: Response, next: Next
     }
 });
 
+// PUT /api/students/:id/finalize - Finalize Student Record (Teacher)
+router.put('/students/:id/finalize', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const role = getCurrentUserRole(req);
+    const userId = getCurrentUserId(req);
+    
+    if (role !== 'teacher' || !userId) {
+        res.status(403).json({ message: 'Forbidden: Only teachers can finalize student records.' });
+        return;
+    }
+
+    const studentId = req.params.id;
+
+    try {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            res.status(404).json({ message: 'Student not found.' });
+            return;
+        }
+
+        if (student.assignedTeacherId !== userId) {
+            res.status(403).json({ message: 'Forbidden: You are not assigned to this student.' });
+            return;
+        }
+
+        if (student.finalized) {
+            res.status(409).json({ message: 'Conflict: Record is already finalized.' });
+            return;
+        }
+
+        if (student.finalReportGrade === null) {
+            res.status(409).json({ message: 'Conflict: Final report grade must be entered before finalizing.' });
+            return;
+        }
+
+        student.finalized = true;
+        await student.save();
+
+        res.json(student);
+    } catch (error) {
+        console.error("Error finalizing student record:", error);
+        next(error);
+    }
+});
+
 export default router;
