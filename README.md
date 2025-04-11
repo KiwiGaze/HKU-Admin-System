@@ -13,8 +13,8 @@ HKU-Admin-System/
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── public/
-│   │   ├── login-bg.jpg
-│   │   └── logo.svg
+│   │   ├── login-bg.jpg  # Background image for login page
+│   │   └── logo.svg      # Logo for the application
 │   ├── src/
 │   │   ├── App.vue
 │   │   ├── components/
@@ -36,10 +36,10 @@ HKU-Admin-System/
 │   │   ├── types/             # TypeScript type definitions
 │   │   │   ├── models.ts      # Type definitions for models (Student, Teacher)
 │   │   ├── views/             # Page-level components
-│   │   │   ├── AdminDashboard.vue
-│   │   │   ├── LoginPage.vue
+│   │   │   ├── AdminDashboard.vue # Admin dashboard
+│   │   │   ├── LoginPage.vue     # Login page
 │   │   │   ├── NotFound.vue      # 404 page
-│   │   │   └── TeacherDashboard.vue
+│   │   │   └── TeacherDashboard.vue  # Teacher dashboard
 │   │   └── vite-env.d.ts
 │   ├── tailwind.config.ts
 │   ├── tsconfig.app.json
@@ -64,28 +64,31 @@ HKU-Admin-System/
 
 ### Administrator (Admin)
 
-* **Manage Student Lists:** Add new students to the system.
+* **Manage Student Lists:** Add new students to the system and delete existing students.
+* **View All Teachers:** Access a list of all teachers in the system.
 * **Assign Students to Teachers:** Allocate students to specific teachers (not allowed for finalized records).
 * **View All Student Status:** Display a comprehensive overview of all students, including their assigned teacher, progress and final report grades, and finalization status.
 * **Unfinalize Records:** Revert a finalized record to allow further modifications.
+* **Search Students:** Search for students by name. (Case-sensitive)
 
 ### Teacher
 
 * **View Assigned Students:** Access a list containing only the students assigned to them.
 * **Input Student Grades:** Enter grades for both progress and final reports (not allowed for finalized records).
 * **Finalize Records:** Mark a student's record as finalized after grading (requires final grade to be entered), preventing further modifications after confirmation.
+* **Search Students:** Search for students by name. (Case-sensitive)
 
 ## Technology Stack
 
 * **Frontend:** Vue.js 3 with TypeScript
 * **UI Framework:** Tailwind CSS
-* **UI Components Library:** [Shadcn/Vue](https://www.shadcn-vue.com/)
+* **UI Components Library:** [Shadcn-Vue](https://www.shadcn-vue.com/)
 * **Development Server:** Vite
 * **State Management:** Pinia
 * **Backend:** Express.js (Node.js)
-* **Database:** SQLite
-* **Data Persistence:** SQLite with Sequelize ORM
-* **API Testing:** curl or Postman
+* **Database:** SQLite (PostgreSQL for production)
+* **Object-Relational Mapping (ORM):** Sequelize
+* **API Testing:** curl
 * **Icon Library:** [Lucide-Vue-Next](https://lucide.dev/)
 
 ## Getting Started
@@ -120,16 +123,20 @@ HKU-Admin-System/
   # In the server directory
   npm run dev
   ```
-  The backend API will run on `http://localhost:3000`. On first run, it will:
+  The backend API will run on [`http://localhost:3000`](http://localhost:3000). On first run, it will:
   - Create a SQLite database file (`database.sqlite`)
   - Initialize default teacher data automatically
+  You will see the following output:
+  ```
+  HKU Admin System Backend
+  ```
 
 2. **Run the Frontend (Vite Development Server):**
   ```bash
   # In the client directory
   npm run dev
   ```
-  The application should be accessible at `http://localhost:5173`.
+  The application should be accessible at [`http://localhost:5173`](http://localhost:5173).
 
 ## Usage
 
@@ -175,7 +182,6 @@ A video demonstration showcasing the application's features and workflow can be 
 
 ## Future Improvements
 
-* Implement a proper frontend interface with Vue.js components
 * Add more robust error handling and user feedback
 * Add more comprehensive logging
 * Implement proper authentication with JWT instead of hardcoded credentials
