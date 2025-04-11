@@ -366,30 +366,30 @@ const resetFilters = () => {
       <!-- Main Content Area -->
       <div v-else>
         <Tabs v-model="activeTab" class="w-full">
-          <div class="border-b mb-6">
-            <TabsList class="inline-flex h-12 items-center justify-center rounded-md bg-muted p-1 w-auto">
-              <!-- Students Tab Trigger -->
-              <TabsTrigger 
+            <div class="border-b mb-6">
+              <TabsList class="inline-flex h-auto sm:h-12 flex-wrap sm:flex-nowrap items-center justify-center rounded-md bg-muted p-1 w-full">
+                <!-- Students Tab Trigger -->
+                <TabsTrigger 
                 value="students" 
-                class="inline-flex items-center justify-center whitespace-nowrap px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
+                class="flex-1 min-w-[150px] inline-flex items-center justify-center whitespace-nowrap px-3 sm:px-5 py-2 sm:py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
                 @click="handleTabChange('students')"
-              >
-                <Users class="h-4 w-4 mr-2" />
-                Student Management
-                <Badge class="hidden sm:block ml-2 bg-blue-100 text-blue-800">{{ studentStore.students.length }}</Badge>
-              </TabsTrigger>
-              <!-- Teachers Tab Trigger -->
-              <TabsTrigger 
+                >
+                <Users class="h-4 w-4 mr-1 sm:mr-2" />
+                <span class="truncate">Student Management</span>
+                <Badge class="ml-1 sm:ml-2 bg-blue-100 text-blue-800 text-xs">{{ studentStore.students.length }}</Badge>
+                </TabsTrigger>
+                <!-- Teachers Tab Trigger -->
+                <TabsTrigger 
                 value="teachers" 
-                class="inline-flex items-center justify-center whitespace-nowrap px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
+                class="flex-1 min-w-[150px] inline-flex items-center justify-center whitespace-nowrap px-3 sm:px-5 py-2 sm:py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
                 @click="handleTabChange('teachers')"
-              >
-                <User class="h-4 w-4 mr-2" />
-                Teacher Information
-                <Badge class="hidden sm:block ml-2 bg-blue-100 text-blue-800">{{ teacherStore.teachers.length }}</Badge>
-              </TabsTrigger>
-            </TabsList>
-          </div>
+                >
+                <User class="h-4 w-4 mr-1 sm:mr-2" />
+                <span class="truncate">Teacher Information</span>
+                <Badge class="ml-1 sm:ml-2 bg-blue-100 text-blue-800 text-xs">{{ teacherStore.teachers.length }}</Badge>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           
           <!-- Students Tab Content -->
           <TabsContent 

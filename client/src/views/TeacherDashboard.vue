@@ -351,29 +351,29 @@ const getStudentName = (id: string | null): string => {
 
         <!-- Main Content Tabs -->
         <Tabs v-model="activeTab" class="w-full">
-          <div class="border-b mb-6">
-            <TabsList class="inline-flex h-12 items-center justify-center rounded-md bg-muted p-1 w-auto">
+            <div class="border-b mb-6">
+            <TabsList class="inline-flex h-auto sm:h-12 flex-wrap sm:flex-nowrap items-center justify-center rounded-md bg-muted p-1 w-full">
               <!-- Assigned Students Tab Trigger -->
               <TabsTrigger 
-                value="assigned" 
-                class="inline-flex items-center justify-center whitespace-nowrap px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
-                @click="handleTabChange('assigned')"
+              value="assigned" 
+              class="flex-1 min-w-[150px] inline-flex items-center justify-center whitespace-nowrap px-3 sm:px-5 py-2 sm:py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
+              @click="handleTabChange('assigned')"
               >
-                <Users class="h-4 w-4 mr-2" />
-                Assigned Students
-                <Badge class="ml-2 bg-blue-100 text-blue-800">{{ stats.total }}</Badge>
+              <Users class="h-4 w-4 mr-1 sm:mr-2" />
+              <span class="truncate">Assigned Students</span>
+              <Badge class="ml-1 sm:ml-2 bg-blue-100 text-blue-800 text-xs">{{ stats.total }}</Badge>
               </TabsTrigger>
               <!-- Report Overview Tab Trigger -->
               <TabsTrigger 
-                value="reports" 
-                class="inline-flex items-center justify-center whitespace-nowrap px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
-                @click="handleTabChange('reports')"
+              value="reports" 
+              class="flex-1 min-w-[150px] inline-flex items-center justify-center whitespace-nowrap px-3 sm:px-5 py-2 sm:py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow rounded-md"
+              @click="handleTabChange('reports')"
               >
-                <BookOpen class="h-4 w-4 mr-2" />
-                Report Overview
+              <BookOpen class="h-4 w-4 mr-1 sm:mr-2" />
+              <span class="truncate">Report Overview</span>
               </TabsTrigger>
             </TabsList>
-          </div>
+            </div>
           
           <!-- Assigned Students Tab Content -->
           <TabsContent 
