@@ -221,7 +221,6 @@ const finalizeRecord = async (studentId: string) => {
     const errorMessage = err.message || 'Failed to finalize student record.';
     toast.error('Error finalizing record', { description: errorMessage });
   }
-  // Note: The UI updates reactively based on the store change
 };
 
 // Refreshes the student data from the server

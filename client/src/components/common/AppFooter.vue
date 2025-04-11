@@ -8,7 +8,6 @@ import { School, Github, Heart, ExternalLink } from 'lucide-vue-next';
 const currentYear = new Date().getFullYear();
 const router = useRouter();
 
-// Current app version - you can update this as needed
 const appVersion = ref('v1.0.0');
 
 // Navigate to different pages

@@ -25,7 +25,7 @@ const routes = [
     component: () => import('@/views/TeacherDashboard.vue'),
     meta: { requiresAuth: true, role: 'teacher' }
   },
-  // 添加 404 错误页面路由，放在最后捕获所有未定义的路径
+
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -40,7 +40,7 @@ const router = createRouter({
 });
 
 // Add global navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _, next) => {
   const authStore = useAuthStore();
   const requiresAuth = to.meta.requiresAuth;
   const requiredRole = to.meta.role;

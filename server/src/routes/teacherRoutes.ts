@@ -34,10 +34,5 @@ router.get('/teachers', async (req: Request, res: Response, next: NextFunction):
     }
 });
 
-// --- Placeholder for potential future teacher-specific routes ---
-// Example: POST /api/teachers (if Admin needs to add teachers via API)
-// router.post('/teachers', async (req: Request, res: Response, next: NextFunction): Promise<void> => { ... });
-// --- End Placeholder ---
-
 
 export default router; // Export the router
